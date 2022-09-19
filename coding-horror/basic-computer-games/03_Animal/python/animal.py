@@ -1,0 +1,204 @@
+"""
+Animal
+
+From: Basic computer Games(1978)
+
+   Unlike other computer games in which the computer
+  picks a number or letter and you must guess what it is,
+  in this game you think of an animal and the computer asks
+  you questions and tries to guess the name of your animal.
+  If the computer guesses incorrectly, it will ask you for a
+  question that differentiates the animal it guessed
+  from the one you were thinking of. In this way the
+  computer "learns" new animals. Questions to differentiate
+  new animals should be input without a question mark.
+   This version of the game does not have a SAVE feature.
+  If your sistem allows, you may modify the program to
+  save array A$, then reload the array  when you want
+  to play the game again. This way you can save what the
+  computer learns over a series of games.
+   At any time if you reply 'LIST' to the question "ARE YOU
+  THINKING OF AN ANIMAL", the computer will tell you all the
+  animals it knows so far.
+   The program starts originally by knowing only FISH and BIRD.
+  As you build up a file of animals you should use broad,
+  general questions first and then narrow down to more specific
+  ones with later animals. For example, If an elephant was to be
+  your first animal, the computer would ask for a question to distinguish
+  an elephant from a bird. Naturally there are hundreds of possibilities,
+  however, if you plan to build a large file of animals a good question
+  would be "IS IT A MAMAL".
+   This program can be easily modified to deal with categories of
+  things other than animals by simply modifying the initial data
+  in Line 530 and the dialogue references to animal in Lines 10,
+  40, 50, 130, 230, 240 and 600. In an educational environment, this
+  would be a valuable program to teach the distinguishing chacteristics
+  of many classes of objects -- rock formations, geography, marine life,
+  cell structures, etc.
+   Originally developed by Arthur Luehrmann at Dartmouth College,
+  Animal was subsequently shortened and modified by Nathan Teichholtz at
+  DEC and Steve North at Creative Computing
+"""
+
+from typing import Optional
+
+
+class Node:
+    """
+    Node of the binary tree of questions.
+    """
+
+    def __init__(
+        self, text: str, yes_node: Optional["Node"], no_node: Optional["Node"]
+    ):
+        # the nodes that are leafs have as text the animal's name, otherwise
+        # a yes/no question
+        self.text = text
+        self.yes_node = yes_node
+        self.no_node = no_node
+
+    def update_node(
+        self, new_question: str, answer_new_ques: str, new_animal: str
+    ) -> None:
+        # update the leaf with a question
+        old_animal = self.text
+        # we replace the animal with a new question
+        self.text = new_question
+
+        if answer_new_ques == "y":
+            self.yes_node = Node(new_animal, None, None)
+            self.no_node = Node(old_animal, None, None)
+        else:
+            self.yes_node = Node(old_animal, None, None)
+            self.no_node = Node(new_animal, None, None)
+
+    # the leafs have as children None
+    def is_leaf(self) -> bool:
+        return self.yes_node is None and self.no_node is None
+
+
+def list_known_animals(root_node: Optional[Node]) -> None:
+    """Traversing the tree by recursion until we reach the leafs."""
+    if root_node is None:
+        return
+
+    if root_node.is_leaf():
+        print(root_node.text, end=" " * 11)
+        return
+
+    if root_node.yes_node:
+        list_known_animals(root_node.yes_node)
+
+    if root_node.no_node:
+        list_known_animals(root_node.no_node)
+
+
+def parse_input(message: str, check_list: bool, root_node: Optional[Node]) -> str:
+    """only accepts yes or no inputs and recognizes list operation"""
+    token = ""
+    while token not in ["y", "n"]:
+        inp = input(message)
+
+        if check_list and inp.lower() == "list":
+            print("Animals I already know are:")
+            list_known_animals(root_node)
+            print("\n")
+
+        if len(inp) > 0:
+            token = inp[0].lower()
+        else:
+            token = ""
+
+    return token
+
+
+def avoid_void_input(message: str) -> str:
+    answer = ""
+    while answer == "":
+        answer = input(message)
+    return answer
+
+
+def print_intro() -> None:
+    print(" " * 32 + "Animal")
+    print(" " * 15 + "Creative Computing Morristown, New Jersey\n")
+    print("Play ´Guess the Animal´")
+    print("Think of an animal and the computer will try to guess it.\n")
+
+
+def main() -> None:
+    # Initial tree
+    yes_child = Node("Fish", None, None)
+    no_child = Node("Bird", None, None)
+    root = Node("Does it swim?", yes_child, no_child)
+
+    # Main loop of game
+    print_intro()
+    keep_playing = parse_input("Are you thinking of an animal? ", True, root) == "y"
+    while keep_playing:
+        keep_asking = True
+        # Start traversing the tree by the root
+        actual_node: Node = root
+
+        while keep_asking:
+
+            if not actual_node.is_leaf():
+
+                # we have to keep asking i.e. traversing nodes
+                answer = parse_input(actual_node.text, False, None)
+
+                # As this is an inner node, both children are not None
+                if answer == "y":
+                    assert actual_node.yes_node is not None
+                    actual_node = actual_node.yes_node
+                else:
+                    assert actual_node.no_node is not None
+                    actual_node = actual_node.no_node
+            else:
+                # we have reached a possible answer
+                answer = parse_input(f"Is it a {actual_node.text}? ", False, None)
+                if answer == "n":
+                    # add the new animal to the tree
+                    new_animal = avoid_void_input(
+                        "The animal you were thinking of was a ? "
+                    )
+                    new_question = avoid_void_input(
+                        "Please type in a question that would distinguish a "
+                        f"{new_animal} from a {actual_node.text}: "
+                    )
+                    answer_new_question = parse_input(
+                        f"for a {new_animal} the answer would be: ", False, None
+                    )
+
+                    actual_node.update_node(
+                        new_question + "?", answer_new_question, new_animal
+                    )
+
+                else:
+                    print("Why not try another animal?")
+
+                keep_asking = False
+
+        keep_playing = parse_input("Are you thinking of an animal? ", True, root) == "y"
+
+
+########################################################
+# Porting Notes
+#
+#   The data structure used for storing questions and
+#   animals is a binary tree where each non-leaf node
+#   has a question, while the leafs store the animals.
+#
+#   As the original program, this program doesn't store
+#   old questions and animals. A good modification would
+#   be to add a database to store the tree.
+#    Also as the original program, this one can be easily
+#   modified to not only make guesses about animals, by
+#   modyfing the initial data of the tree, the questions
+#   that are asked to the user and the initial message
+#   function  (Lines 120 to 130, 135, 158, 160, 168, 173)
+
+########################################################
+
+if __name__ == "__main__":
+    main()

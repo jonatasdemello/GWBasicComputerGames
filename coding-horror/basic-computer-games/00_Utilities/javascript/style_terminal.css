@@ -1,0 +1,117 @@
+/**
+ * Old school terminal style
+ *
+ * @see https://codepen.io/cvan/pen/Zarmry
+ * @see http://aleclownes.com/2017/02/01/crt-display.html
+ */
+
+ /* define the main color theme */
+:root {
+  --background: rgb(1, 24, 1);
+  --text: rgb(51, 251, 51);
+  --input: yellow;
+  --font: 600 1rem/1.3 Consolas, Andale Mono, monospace;
+}
+
+/* reset some styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html {
+  font-size: 16px;
+}
+
+header {
+  margin-bottom: 2rem;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  font: var(--font);
+  margin: 0;
+}
+
+#output {
+  padding: 1rem;
+}
+
+/* format input fields */
+/* TODO: a simple blinking cursor would even better than this! */
+input {
+  display: inline-block;
+  position: relative;
+  caret-color: var(--input);
+  background: none;
+  border: none;
+  outline: none;
+  border-bottom: 1px solid var(--input);
+  border-style: none none dashed none;
+  color: var(--input);
+  font: 900 1rem/1.3 Consolas, Andale Mono, monospace;
+  animation: textShadow 1.6s infinite;
+  text-transform: uppercase;
+}
+
+/* format the link list */
+ul {
+  margin: 0;
+  list-style: none;
+}
+li {
+  margin: 0;
+}
+/* format the sub-lists */
+ul > li > ul {
+  margin-left: 1.75rem;
+}
+ul > li > ul > li::before {
+  content: "├── ";
+}
+ul > li > ul > li:last-child::before {
+  content: "└── ";
+}
+
+/* overwrite the default (blue) link styles */
+a, a:visited {
+  color: var(--text);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* add all the face flicker effects (only on desktop) */
+@media not screen and (max-width: 960px) and (prefers-reduced-motion) {
+  main {
+    padding: 3rem;
+  }
+  #output::before {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+  }
+  #output::after {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: rgba(18, 16, 16, 0.1);
+    opacity: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+}
